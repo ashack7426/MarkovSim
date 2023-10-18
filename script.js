@@ -778,8 +778,7 @@ function updateStats() {
       if (currStep == 0) {
         statsTable.rows[i + 1].cells[2].textContent = 0;
       } else {
-        statsTable.rows[i + 1].cells[2].textContent =
-          100 * (visits[i] / currStep);
+        statsTable.rows[i + 1].cells[2].textContent = parseFloat(100 * (visits[i] / currStep)).toFixed(fix_nums);
       }
 
       table_path[currIter][i][1] = statsTable.rows[i + 1].cells[2].textContent;
@@ -789,14 +788,14 @@ function updateStats() {
 
       if (currIter > 0) {
         statsTable.rows[i + 1].cells[3].textContent =
-          100 * (totalVisits[i] / (currIter * totalSteps));
+          parseFloat(100 * (totalVisits[i] / (currIter * totalSteps))).toFixed(fix_nums);
 
         statsTable.rows[i + 1].cells[6].textContent =
-          totalFirstSteps[i] / currIter;
+          parseFloat(totalFirstSteps[i] / currIter).toFixed(fix_nums);
 
         table_path[currIter][i][2] =
-          100 * (totalVisits[i] / (currIter * totalSteps));
-        table_path[currIter][i][5] = totalFirstSteps[i] / currIter;
+          parseFloat(100 * (totalVisits[i] / (currIter * totalSteps))).toFixed(fix_nums);
+        table_path[currIter][i][5] = parseFloat(totalFirstSteps[i] / currIter).toFixed(fix_nums);
       }
     }
 

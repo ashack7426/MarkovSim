@@ -273,7 +273,7 @@ export_button.addEventListener("click", () => {
   if (!editText) {
     txt = "States: \n[";
     txt += state_names;
-    txt += "]\n\nDistance Table:\n";
+    txt += "]\n\nTransition Table:\n";
     txt += stringify2DArray(distances);
     txt += "\n\nInitial State Probs: \n[";
     txt += starting_state_probs;

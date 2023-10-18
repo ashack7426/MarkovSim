@@ -1,0 +1,140 @@
+#graph-container {
+  width: 100%;
+  height: 25%;
+}
+
+#controls {
+  margin-top: 20px;
+}
+
+/* Define a CSS class for shorter input elements in the distance table */
+.shorter-input {
+  max-width: 50px; /* Set a maximum width to limit expansion */
+  width: auto; /* Allow the input to expand based on content */
+  /* You can adjust max-width and other input properties as needed */
+}
+
+#top {
+  height: 8%;
+  margin-bottom: 2%;
+}
+
+/* CSS */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#start-vars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.editable {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.editable div {
+  border: 1px solid #ccc;
+  padding: 3px 5px;
+  min-width: 40px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.table-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  background-color: #f0f0f0;
+  font-weight: bold;
+  padding: 2px 5px;
+}
+
+.scrollable-table {
+  margin-top: 2vh;
+  margin-bottom: 2vh;
+  max-height: 80px; /* Adjust the height as needed */
+  overflow: auto;
+  border: 1px solid #ccc;
+}
+
+th,
+td {
+  padding: 5px;
+  text-align: center;
+
+  border: 1px solid black;
+  padding: 8px;
+  background-color: #fff;
+}
+
+/* Style the input field */
+input[type="number"] {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box; /* Include padding and border within the input width */
+}
+
+/* Add your CSS styling here */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* Make the first column fixed */
+table td:first-child {
+  position: sticky;
+  left: 0;
+  background-color: white; /* Set the background color of the fixed column */
+  z-index: 1; /* Ensure it appears beneath the header */
+}
+
+#controls {
+  text-align: center;
+  margin-top: 20px;
+}
+
+#Node-Buttons {
+  display: flex; /* Use flexbox to arrange elements horizontally */
+  align-items: center; /* Vertically center elements */
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: auto; /* Allow the page to be scrollable */
+  height: 100vh; /* Ensure the container takes up the full viewport height */
+}
+
+#dist-div,
+#stat-div {
+  max-width: 100%;
+  max-height: 21%;
+  overflow: auto;
+}
+
+#dist-show-button,
+#stat-show-button {
+  width: 100%;
+  display: none;
+}
+
+#top {
+  text-align: center;
+}
+
+.header-container {
+  text-align: center;
+}

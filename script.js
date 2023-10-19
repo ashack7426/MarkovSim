@@ -158,10 +158,11 @@ function updateDistanceMatrix() {
   if (typeof totalRowCell !== "undefined") {
     totalRowCell.cells[0].addEventListener("click", function () {
       total = parseFloat(totalRowCell.cells[1].textContent);
+      let size = data.nodes.length;
 
       if (total == 0) {
         initial_prob_table.querySelectorAll("input").forEach((input, index) => {
-          const val = parseFloat((1 / numNodes).toFixed(fix_nums));
+          const val = parseFloat((1 / size).toFixed(fix_nums));
           input.value = val;
           starting_state_probs[index] = val;
         });

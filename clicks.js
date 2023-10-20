@@ -229,7 +229,10 @@ step_button.addEventListener("click", () => {
 reset_button.addEventListener("click", () => {
   isSimulationRunning = false;
   editText = true;
-  data.nodes.update({ id: currentState, color: null });
+  if (!heatMapMode) {
+    data.nodes.update({ id: currentState, color: null });
+  }
+
   resetStats();
   updateStats();
 });
@@ -265,23 +268,28 @@ totalIterInput.addEventListener("blur", () => {
 });
 
 function stringify2DArray(arr) {
+  if (arr.length == 0) {
+    return "[]";
+  }
   return arr.map((row) => `[${row.join(", ")}]`).join("\n");
 }
 
 export_button.addEventListener("click", () => {
-  let txt = "Simulation has not Started";
-  if (!editText) {
-    txt = "States: \n[";
-    txt += state_names;
-    txt += "]\n\nTransition Table:\n";
-    txt += stringify2DArray(distances);
-    txt += "\n\nInitial State Probs: \n[";
-    txt += starting_state_probs;
-    txt += "]\n\nSteady State Vector: \n[";
-    txt += steady;
-    txt += "]\n\nFull First Arrival Step Matrix:\n";
-    txt += stringify2DArray(full_mean_passage);
+  let txt = "States: \n[";
+  txt += state_names;
+  txt += "]\n\nDistance Table:\n";
+  txt += stringify2DArray(distances);
+  txt += "\n\nInitial State Probs: \n[";
+  txt += starting_state_probs;
+  txt += "]\n\nSteady State Vector (Mixing Time = " + mixing_time + "):\n";
+  txt += expected_methods[0] + "\n[";
+  txt += steady;
+  txt += "]\n\nFull First Arrival Step Matrix:\n";
+  txt += expected_methods[1];
+  txt += "\n";
+  txt += stringify2DArray(full_mean_passage);
 
+  if (!editText) {
     for (let i = 0; i < Math.min(currIter + 1, totalIter); i++) {
       txt += "\n\nIteration " + (i + 1) + ":\n";
       txt += JSON.stringify([
@@ -331,10 +339,23 @@ export_button.addEventListener("click", () => {
       export_button.innerText = "Export Data";
     }, 1000); // Change back after 2 seconds
   } catch (err) {
-    console.error("Failed to copy text: ", err);
+    export_button.innerText = "Failed to Copy";
+    setTimeout(function () {
+      export_button.innerText = "Export Data";
+    }, 1000); // Change back after 2 seconds
   } finally {
     document.body.removeChild(tempInput);
   }
+});
+
+heatmap_button.addEventListener("click", () => {
+  heatMapMode = true;
+  updateVisualization(currentState, currentState);
+});
+
+graph_button.addEventListener("click", () => {
+  heatMapMode = false;
+  updateVisualization(currentState, currentState);
 });
 
 // Add an initial node when the page loads

@@ -26,7 +26,7 @@
           accept=".csv, .tsv"
           style="display: none"
         />
-        <button id="import-data" style="width: 33.3333%">Import Data (.csv or .tsv)</button>
+        <button id="import-data" style="width: 33.3333%">Import Data</button>
         <button id="delete-node-button" style="width: 33.3333%">
           Delete Node
         </button>
@@ -38,9 +38,15 @@
         </table>
       </div>
 
-      <button id="dist-show-button">Click for Transition Table</button>
+      <button id="dist-show-button">Click to Dist Table</button>
 
-      <button id="clear-button" style="width: 100%">Clear Table</button>
+      <div id="Node-Buttons">
+        <button id="graph-button" style="width: 33.3333%">Show Graph</button>
+        <button id="clear-button" style="width: 33.3333%">Clear Table</button>
+        <button id="heatmap-button" style="width: 33.3333%">
+          Show HeatMap
+        </button>
+      </div>
 
       <div id="graph-container"></div>
       <!-- Center graph button -->
@@ -63,9 +69,9 @@
         </table>
       </div>
 
-      <button id="stat-show-button">Click for Stat Table</button>
+      <button id="stat-show-button">Click to Stat Table</button>
 
-      <button id="export_data" style="width: 100%">Export Stats</button>
+      <button id="export_data" style="width: 100%">Export Data</button>
 
       <!-- Control buttons and input -->
       <div style="margin-top: 3; margin-bottom: 3" id="controls">
@@ -108,7 +114,7 @@
               class="shorter-input"
               type="number"
               min="1"
-              value="5"
+              value="100"
             />
           </p>
         </div>

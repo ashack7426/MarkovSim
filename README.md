@@ -4,7 +4,7 @@ This Markov Chain Simulator is a web-based tool that allows you to visualize and
 
 
 ## Simulator:
-<img width="1429" alt="Screenshot 2023-10-19 at 1 16 22 PM" src="https://github.com/ashack7426/MarkovSim/assets/24733269/5662bf07-4905-4850-920e-3041262c88cb">
+<img width="1370" alt="Screenshot 2023-10-20 at 7 41 41 PM" src="https://github.com/ashack7426/MarkovSim/assets/24733269/15978990-5410-4a22-80d0-06e86ac4cc2b">
 
 https://ashack7426.github.io/MarkovSim/
 

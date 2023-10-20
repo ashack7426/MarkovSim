@@ -1,13 +1,14 @@
 // Function to update the distance matrix
 function updateDistanceMatrix() {
-  // ... (previous code)
   const numNodes = data.nodes.length;
-  firstSteps = Array(numNodes).fill(NaN);
+  firstSteps = Array(numNodes).fill(Infinity);
   totalFirstSteps = Array(numNodes).fill(NaN);
   visits = Array(numNodes).fill(0);
   totalVisits = Array(numNodes).fill(0);
   table_path = [createEmptyTable(data.nodes.length, 7)];
   state_names = [];
+  edge_visits = {};
+  max_visits = 0;
 
   // Create the header row
   let tableHTML =
@@ -183,21 +184,30 @@ function updateDistanceMatrix() {
     });
   }
 
+  expected = calcExpectedVals();
+  steady = expected[0];
+  mean_first_passage = expected[1];
+  full_mean_passage = expected[2];
+
   // Update the vis.js network with new distances
   addTotalColumn();
   updateVisNetwork();
+  updateVisualization();
+  centerGraph();
 }
 
 // Function to update the vis.js network with new distances
 function updateVisNetwork() {
   // Clear existing edges
   data.edges.clear();
+  edge_ids = {};
 
   // Add new edges based on distances
   for (let i = 0; i < distances.length; i++) {
     for (let j = 0; j < distances[i].length; j++) {
       const distance = distances[i][j];
       if (distance !== "" && !isNaN(parseFloat(distance))) {
+        edge_ids[`${i + 1}-${j + 1}`] = data.edges.length;
         data.edges.add({
           id: data.edges.length,
           from: i + 1,
@@ -219,7 +229,10 @@ function addNode() {
     return;
   }
   const nodeId = data.nodes.length + 1;
-  data.nodes.add({ id: nodeId, label: `State ${nodeId}` });
+  data.nodes.add({
+    id: nodeId,
+    label: `State ${nodeId}`,
+  });
 
   // Add a new row and column to the distances array
   const numNodes = data.nodes.length;
@@ -228,7 +241,7 @@ function addNode() {
   }
 
   distances.push(new Array(numNodes).fill(""));
-  firstSteps.push(NaN);
+  firstSteps.push(Infinity);
   totalFirstSteps.push(NaN);
   visits.push(0);
   totalVisits.push(0);
@@ -253,6 +266,7 @@ function addNode() {
 
   // Update the distance matrix
   updateDistanceMatrix();
+  updateVisualization();
 }
 
 // Function to delete the last node and update the distance matrix
@@ -301,8 +315,10 @@ function centerGraph() {
   // Assuming you have a reference to your vis.js network
   const network = new vis.Network(container, data, options);
 
-  // Update the node data with the new size
-  network.setData(data);
+  network.on("stabilizationIterationsDone", function () {
+    // Disable physics after stabilization
+    network.setOptions({ physics: false });
+  });
 
   // Center the graph
   network.fit();
@@ -446,12 +462,38 @@ function resetStats() {
   isSimulationRunning = false;
   currStep = 0;
   currIter = 0;
-  firstSteps = new Array(data.nodes.length).fill(NaN);
+  firstSteps = new Array(data.nodes.length).fill(Infinity);
   totalFirstSteps = new Array(data.nodes.length).fill(NaN);
   visits = new Array(data.nodes.length).fill(0);
   totalVisits = new Array(data.nodes.length).fill(0);
   table_path = [createEmptyTable(data.nodes.length, 7)];
   iter_path = [[]];
+  edge_visits = {};
+  max_visits = 0;
+}
+
+function calculateMSE(matrix1, matrix2) {
+  const njMatrix1 = nj.array(matrix1);
+  const njMatrix2 = nj.array(matrix2);
+  const squaredDiff = nj
+    .subtract(njMatrix1, njMatrix2)
+    .multiply(nj.subtract(njMatrix1, njMatrix2));
+  const mse = squaredDiff.mean();
+
+  return mse;
+}
+
+function copyMatrix(originalMatrix, n) {
+  // Create a new matrix with the same dimensions as the original matrix
+  const copiedMatrix = new Array(n);
+  for (let i = 0; i < n; i++) {
+    copiedMatrix[i] = new Array(n);
+    for (let j = 0; j < n; j++) {
+      copiedMatrix[i][j] = originalMatrix[i][j];
+    }
+  }
+
+  return copiedMatrix;
 }
 
 // calc steady state and mean first passage time matrix
@@ -491,20 +533,43 @@ function calcExpectedVals() {
     steadyStateProbabilities = math
       .lusolve(QTQ, bQT)
       ._data.map((subarray) => subarray[0]);
+    expected_methods[0] = "Exact Solution (Method 1/2):";
   } catch {
-    console.log("Error with LU decomposition, using least-squares solution.");
-
     try {
       steadyStateProbabilities = math.multiply(
         math.inv(math.multiply(math.transpose(QTQ), QTQ)),
         math.multiply(math.transpose(QTQ), bQT)
       );
 
-      console.log("Least-Squares Solution:");
+      expected_methods[0] = "Least-Squares Solution (Method 2/2):";
     } catch {
-      console.log("Error with least-squares solution");
+      expected_methods[0] = "No Solution Found:";
+      expected_methods[1] = "No Solution Found:";
+      return [[], [], []];
     }
   }
+
+  // calculate mixing time
+  const steady_matrix = new Array(numStates);
+  for (let i = 0; i < numStates; i++) {
+    steady_matrix[i] = steadyStateProbabilities;
+  }
+
+  let error = Infinity;
+  let curr = copyMatrix(transition_matrix._data, numStates);
+  let cnt = 0;
+
+  while (error > 0.0000001 && cnt < 10000) {
+    new_error = calculateMSE(curr, steady_matrix);
+    if (new_error == error) {
+      break;
+    }
+    error = new_error;
+    curr = math.multiply(curr, curr);
+    cnt += 1;
+  }
+
+  mixing_time = cnt;
 
   for (let i = 0; i < dim; i++) {
     if (steadyStateProbabilities[i] < 0) {
@@ -516,9 +581,6 @@ function calcExpectedVals() {
       );
     }
   }
-
-  console.log("Steady-State Vector (Expected Visit Percentages):");
-  console.log(steadyStateProbabilities);
 
   const meanFPTMatrix = math.zeros([numStates, numStates]);
 
@@ -574,22 +636,18 @@ function calcExpectedVals() {
   let X;
   try {
     X = math.lusolve(A, B).map((subarray) => subarray[0]);
-    console.log("Exact solution found:");
+    expected_methods[1] = "Exact Solution (Method 1/3):";
   } catch (error) {
     try {
       // If LU decomposition fails, use an alternative method (least-squares)
-      console.log("Error with LU decomposition, using least-squares solution.");
 
       X = math.multiply(
         math.inv(math.multiply(math.transpose(A), A)),
         math.multiply(math.transpose(A), B)
       )._data;
 
-      console.log("Least-Squares Solution:");
+      expected_methods[1] = "Least-Squares Solution (Method 2/3):";
     } catch (lsError) {
-      // If the alternative method also fails, handle the error or provide an error message
-      console.log("Error with least-squares solution, using psuedo inverse.");
-
       try {
         // Calculate the SVD
         const svd = numeric.svd(math.multiply(math.transpose(A), A));
@@ -625,10 +683,11 @@ function calcExpectedVals() {
           math.multiply(math.transpose(A), B)
         )._data;
 
-        console.log("Pusedo Inverse Solution Found:");
+        expected_methods[1] = "Pusedo Inverse Solution (Method 3/3):";
       } catch (e) {
-        console.log("Pusedo Inverse Failed: ");
         X = Array(numStates).fill(NaN);
+        expected_methods[1] = "No Solution Found:";
+        return [steadyStateProbabilities, [], []];
       }
     }
   }
@@ -643,10 +702,6 @@ function calcExpectedVals() {
     }
   }
 
-  console.log("Mean First-Passage Time:");
-  console.log(meanFPTMatrix);
-
-  console.log("Mean First-Passage Time (Given Starting Probs):");
   let starting_passage_time = new Array(numStates).fill(0);
   for (let i = 0; i < numStates; i++) {
     for (let j = 0; j < numStates; j++) {
@@ -655,17 +710,11 @@ function calcExpectedVals() {
         starting_passage_time[j] +=
           starting_state_probs[i] * meanFPTMatrix[i][j];
       } else {
-        starting_passage_time[j] = NaN;
+        starting_passage_time[j] = Infinity;
       }
     }
   }
 
-  for (let i = 0; i < numStates; i++) {
-    if (starting_passage_time[i] == Infinity) {
-      starting_passage_time[i] = NaN;
-    }
-  }
-  console.log(starting_passage_time);
   return [steadyStateProbabilities, starting_passage_time, meanFPTMatrix];
 }
 
@@ -675,6 +724,7 @@ function step() {
   if (!expected_filled) {
     currentState = chooseStartingState(starting_state_probs) + 1; //choose one with the probs
     updateVisualization(currentState, currentState);
+    expected_filled = true;
   }
 
   if (currIter == totalIter) {
@@ -683,14 +733,22 @@ function step() {
     return;
   }
   visits[currentState - 1] += 1;
+  max_visits = Math.max(visits[currentState - 1], max_visits);
 
   iter_path[currIter].push(state_names[currentState - 1]);
 
   // Calculate the next state based on transition probabilities
   const nextState = calculateNextState(currentState);
 
-  if (isNaN(firstSteps[nextState - 1])) {
+  if (firstSteps[nextState - 1] == Infinity) {
     firstSteps[nextState - 1] = currStep + 1;
+  }
+
+  let key = `${currentState}-${nextState}`;
+  if (key in edge_visits) {
+    edge_visits[key] += 1;
+  } else {
+    edge_visits[key] = 1;
   }
 
   // Update the visualization (e.g., change node colors)
@@ -717,7 +775,9 @@ function step() {
     }
     currIter += 1;
     visits = Array(data.nodes.length).fill(0);
-    firstSteps = Array(data.nodes.length).fill(NaN);
+    firstSteps = Array(data.nodes.length).fill(Infinity);
+    edge_visits = {};
+    max_visits = 0;
 
     iter_path.push([]);
     table_path.push(createEmptyTable(data.nodes.length, 7));
@@ -743,18 +803,6 @@ function updateStats() {
     });
 
     let nodeCnt = data.nodes.length;
-
-    //display expected calc once
-    if (!expected_filled) {
-      expected = calcExpectedVals();
-      steady = expected[0];
-      mean_first_passage = expected[1];
-      full_mean_passage = expected[2];
-
-      expected_filled = true;
-      //put the expected vals on table
-    }
-
     //input steps and iteration text
     iterate_text.textContent =
       "Iteration: " + Math.min(currIter + 1, totalIter) + "/";
@@ -769,6 +817,7 @@ function updateStats() {
     for (let i = 0; i < nodeCnt; i++) {
       statsTable.rows[i + 1].cells[4].textContent = 100 * steady[i];
       statsTable.rows[i + 1].cells[7].textContent = mean_first_passage[i];
+
       table_path[currIter][i][3] = 100 * steady[i];
       table_path[currIter][i][6] = mean_first_passage[i];
     }
@@ -779,7 +828,8 @@ function updateStats() {
       if (currStep == 0) {
         statsTable.rows[i + 1].cells[2].textContent = 0;
       } else {
-        statsTable.rows[i + 1].cells[2].textContent = parseFloat(100 * (visits[i] / currStep)).toFixed(fix_nums);
+        statsTable.rows[i + 1].cells[2].textContent =
+          100 * (visits[i] / currStep);
       }
 
       table_path[currIter][i][1] = statsTable.rows[i + 1].cells[2].textContent;
@@ -789,14 +839,14 @@ function updateStats() {
 
       if (currIter > 0) {
         statsTable.rows[i + 1].cells[3].textContent =
-          parseFloat(100 * (totalVisits[i] / (currIter * totalSteps))).toFixed(fix_nums);
+          100 * (totalVisits[i] / (currIter * totalSteps));
 
         statsTable.rows[i + 1].cells[6].textContent =
-          parseFloat(totalFirstSteps[i] / currIter).toFixed(fix_nums);
+          totalFirstSteps[i] / currIter;
 
         table_path[currIter][i][2] =
-          parseFloat(100 * (totalVisits[i] / (currIter * totalSteps))).toFixed(fix_nums);
-        table_path[currIter][i][5] = parseFloat(totalFirstSteps[i] / currIter).toFixed(fix_nums);
+          100 * (totalVisits[i] / (currIter * totalSteps));
+        table_path[currIter][i][5] = totalFirstSteps[i] / currIter;
       }
     }
 
@@ -866,10 +916,72 @@ function calculateNextState(currentState) {
   return currentState;
 }
 
+function rgbToHex(minimum, maximum, value) {
+  let ratio = 0;
+  if (maximum - minimum != 0) {
+    ratio = (2 * (value - minimum)) / (maximum - minimum);
+  }
+
+  const b = Math.max(0, 255 * (1 - ratio));
+  const r = Math.max(0, 255 * (ratio - 1));
+  const g = 255 - b - r;
+
+  // Convert the RGB components to hexadecimal values
+  const toHex = (c) => {
+    const hex = Math.round(c).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+
+  const hexColor = "#" + toHex(r) + toHex(g) + toHex(b);
+
+  return hexColor;
+}
+
 // make the current state default color and next state highlighted
 function updateVisualization(currentState, nextState) {
-  data.nodes.update({ id: currentState, color: null });
-  data.nodes.update({ id: nextState, color: { background: "yellow" } });
+  if (heatMapMode) {
+    //change all edges to blue
+    for (let i = 0; i < data.edges.length; i++) {
+      let color = rgbToHex(0, 0, 0);
+      data.edges.update({ id: i, color: { color: color } });
+    }
+
+    //go through edge_visits
+    for (const key in edge_visits) {
+      let id = edge_ids[key];
+      let color = rgbToHex(0, max_visits, edge_visits[key]);
+      data.edges.update({ id: id, color: { color: color } });
+    }
+
+    //go through each Node for the color
+    for (let i = 0; i < visits.length; i++) {
+      let color = rgbToHex(0, max_visits, visits[i]);
+
+      data.nodes.update({
+        id: i + 1,
+        color: { background: color },
+        font: { color: "white" },
+      });
+    }
+  } else {
+    let size = data.nodes.length;
+
+    for (let i = 0; i < size; i++) {
+      data.nodes.update({ id: i + 1, color: null, font: { color: "#000" } });
+    }
+
+    for (let i = 0; i < data.edges.length; i++) {
+      data.edges.update({
+        id: i,
+        color: { color: "#2B7CE9", hover: "#848484", highlight: "#848484" },
+      });
+    }
+
+    if (!isNaN(currentState)) {
+      data.nodes.update({ id: currentState, color: null });
+      data.nodes.update({ id: nextState, color: { background: "yellow" } });
+    }
+  }
 }
 
 // add the total column to the distance table

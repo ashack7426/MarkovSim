@@ -9,7 +9,7 @@
 
 /* Define a CSS class for shorter input elements in the distance table */
 .shorter-input {
-  max-width: 50px; /* Set a maximum width to limit expansion */
+  max-width: 100px; /* Set a maximum width to limit expansion */
   width: auto; /* Allow the input to expand based on content */
   /* You can adjust max-width and other input properties as needed */
 }

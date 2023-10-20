@@ -18,7 +18,7 @@ Simulate Markov chain dynamics in real-time, highlighting the current state.
 
 Pause and resume simulations at any time.
 
-Visualize a Heatmap of the Chain to Explore Frequently Visited Regions
+Visualize a Heatmap to Explore Frequently Visited Regions
 
 Gain Valuable Insights into Markov Chain Simulator Statistics
 

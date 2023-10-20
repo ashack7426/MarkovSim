@@ -38,13 +38,21 @@ var collaspeCnt = [false, false];
 
 let currentState = NaN;
 let isSimulationRunning = false;
-let steps_per_sec = 5;
+let steps_per_sec = 100;
 let expected_filled = false;
 let currStep = 0;
 let currIter = 0;
 let totalSteps = 1000;
 let totalIter = 1;
 let iter_path = [[]];
+let heatMapMode = false;
+let edge_visits = {};
+let max_visits = 0;
+let edge_ids = {};
+let hovering = false;
+let selected = false;
+let expected_methods = ["", ""];
+let mixing_time = 10000;
 
 const import_button = document.getElementById("import-data");
 const add_button = document.getElementById("add-node-button");
@@ -54,13 +62,29 @@ const stepSecInput = document.getElementById("stepsec-input");
 const totalStepInput = document.getElementById("steps-input");
 const totalIterInput = document.getElementById("iterate-input");
 
+const heatmap_button = document.getElementById("heatmap-button");
+const graph_button = document.getElementById("graph-button");
+
 // Options for vis.js network visualization
 const options = {
   interaction: {
     hover: true,
     tooltipDelay: 300,
   },
-  physics: false,
+  nodes: {
+    font: { size: 14, color: "black" },
+    color: { highlight: "orange", hover: "orange", border: "black" },
+  },
+  edges: {
+    color: { color: "#2B7CE9", hover: "#848484", highlight: "#848484" },
+  },
+
+  physics: {
+    barnesHut: {
+      gravitationalConstant: -2000,
+      centralGravity: 0.3,
+    },
+  },
   edges: {
     arrows: {
       to: true,
@@ -73,6 +97,11 @@ const options = {
 };
 
 const network = new vis.Network(container, data, options);
+
+network.on("stabilizationIterationsDone", function () {
+  // Disable physics after stabilization
+  network.setOptions({ physics: false });
+});
 
 const distanceMatrixTable = document.getElementById("distance-matrix-table");
 

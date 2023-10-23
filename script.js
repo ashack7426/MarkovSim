@@ -553,7 +553,11 @@ function calcExpectedVals() {
     } catch {
       expected_methods[0] = "No Solution Found:";
       expected_methods[1] = "No Solution Found:";
-      return [new Array(numStates).fill(0), new Array(numStates).fill(Infinity), new Array(numStates).fill(new Array(numStates).fill(Infinity))];
+      return [
+        new Array(numStates).fill(0),
+        new Array(numStates).fill(Infinity),
+        new Array(numStates).fill(new Array(numStates).fill(Infinity)),
+      ];
     }
   }
 
@@ -695,7 +699,11 @@ function calcExpectedVals() {
       } catch (e) {
         X = Array(numStates).fill(NaN);
         expected_methods[1] = "No Solution Found:";
-        return [steadyStateProbabilities, new Array(numStates).fill(Infinity), new Array(numStates).fill(new Array(numStates).fill(Infinity))];
+        return [
+          steadyStateProbabilities,
+          new Array(numStates).fill(Infinity),
+          new Array(numStates).fill(new Array(numStates).fill(Infinity)),
+        ];
       }
     }
   }
@@ -713,7 +721,7 @@ function calcExpectedVals() {
   let starting_passage_time = new Array(numStates).fill(0);
   for (let i = 0; i < numStates; i++) {
     for (let j = 0; j < numStates; j++) {
-      if(starting_state_probs[i] != 0){
+      if (starting_state_probs[i] != 0) {
         starting_passage_time[j] +=
           starting_state_probs[i] * meanFPTMatrix[i][j];
       }
@@ -1108,3 +1116,4 @@ function addTotalColumn() {
     }
   }
 }
+

@@ -545,7 +545,7 @@ function calcExpectedVals() {
     } catch {
       expected_methods[0] = "No Solution Found:";
       expected_methods[1] = "No Solution Found:";
-      return [[], [], []];
+      return [new Array(numStates).fill(0), new Array(numStates).fill(Infinity), new Array(numStates).fill(new Array(numStates).fill(Infinity))];
     }
   }
 
@@ -687,7 +687,7 @@ function calcExpectedVals() {
       } catch (e) {
         X = Array(numStates).fill(NaN);
         expected_methods[1] = "No Solution Found:";
-        return [steadyStateProbabilities, [], []];
+        return [steadyStateProbabilities, new Array(numStates).fill(Infinity), new Array(numStates).fill(new Array(numStates).fill(Infinity))];
       }
     }
   }
@@ -696,7 +696,7 @@ function calcExpectedVals() {
     let ii = mean_indexes[i][0];
     let jj = mean_indexes[i][1];
     if (X[i] < 0) {
-      meanFPTMatrix[ii][jj] = NaN;
+      meanFPTMatrix[ii][jj] = Infinity;
     } else {
       meanFPTMatrix[ii][jj] = math.max(0, parseFloat(X[i].toFixed(fix_nums)));
     }
@@ -705,12 +705,9 @@ function calcExpectedVals() {
   let starting_passage_time = new Array(numStates).fill(0);
   for (let i = 0; i < numStates; i++) {
     for (let j = 0; j < numStates; j++) {
-      if (starting_state_probs[i] == 0) {
-      } else if (!isNaN(meanFPTMatrix[i][j])) {
+      if(starting_state_probs[i] != 0){
         starting_passage_time[j] +=
           starting_state_probs[i] * meanFPTMatrix[i][j];
-      } else {
-        starting_passage_time[j] = Infinity;
       }
     }
   }

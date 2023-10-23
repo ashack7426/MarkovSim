@@ -184,11 +184,6 @@ function updateDistanceMatrix() {
     });
   }
 
-  expected = calcExpectedVals();
-  steady = expected[0];
-  mean_first_passage = expected[1];
-  full_mean_passage = expected[2];
-
   // Update the vis.js network with new distances
   addTotalColumn();
   updateVisNetwork();

@@ -124,6 +124,10 @@ function parseDataFile(file) {
           inputElement.value = starting_state_probs[rowIndex - 1];
         } else {
           starting_state_probs[rowIndex - 1] = parseFloat(inputElement.value);
+          expected = calcExpectedVals();
+          steady = expected[0];
+          mean_first_passage = expected[1];
+          full_mean_passage = expected[2];
         }
 
         if (inputElement.value == 0) {

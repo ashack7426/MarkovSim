@@ -1061,6 +1061,10 @@ function addTotalColumn() {
         }
 
         totalCell.textContent = 1;
+        expected = calcExpectedVals();
+        steady = expected[0];
+        mean_first_passage = expected[1];
+        full_mean_passage = expected[2];
         updateVisNetwork();
       });
 
@@ -1111,6 +1115,10 @@ function addTotalColumn() {
 
           totalCell.textContent = 1;
         }
+        expected = calcExpectedVals();
+        steady = expected[0];
+        mean_first_passage = expected[1];
+        full_mean_passage = expected[2];
         updateVisNetwork();
       });
     }
